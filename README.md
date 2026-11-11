@@ -1,75 +1,127 @@
-# React + TypeScript + Vite
+# CollabDocs
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**A collaborative document editor for creating, editing, importing, exporting, and sharing documents.**
 
-Currently, two official plugins are available:
+[Live Application](https://collabdocs-tan.vercel.app) · [GitHub Repository](https://github.com/Ankrah3/collabdocs)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Overview
 
-## React Compiler
+CollabDocs is a web-based document management and editing application inspired by Google Docs. It provides a clean workspace where authenticated users can create, edit, organize, and manage documents with rich-text formatting and automatic saving.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The application uses Supabase for authentication, database persistence, and document access management.
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Authentication:** User registration and login using Supabase Auth.
+- **Document Management:** Create, edit, and delete documents.
+- **Rich-Text Editor:** Bold, italic, underline, headings, bullet lists, and numbered lists.
+- **Automatic Saving:** Debounced autosave keeps document changes persisted.
+- **Document Import:** Import `.txt`, `.html`, and `.htm` files.
+- **Document Export:** Export documents as HTML or plain text.
+- **Document Sharing:** Share documents with specified email addresses using viewer or editor permissions.
+- **Access Management:** View and revoke document-sharing permissions.
+- **Responsive Interface:** Modern workspace designed for a clean editing experience.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Technology Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+| Technology   | Purpose                                |
+| ------------ | -------------------------------------- |
+| React        | Frontend application                   |
+| TypeScript   | Type safety                            |
+| Vite         | Development and build tooling          |
+| Tailwind CSS | Styling                                |
+| Tiptap       | Rich-text editing                      |
+| Supabase     | Authentication and PostgreSQL database |
+| Lucide React | Icons                                  |
+| Vitest       | Automated testing                      |
+| Vercel       | Production deployment                  |
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting Started
 
+### Prerequisites
+
+- Node.js 20 or later
+- npm
+- A Supabase project
+
+### Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Ankrah3/collabdocs.git
+cd collabdocs
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Install dependencies:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
 ```
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-publishable-key
+```
+
+Use your own Supabase project URL and publishable key. Never expose a Supabase service-role or secret key in frontend code.
+
+### Run Locally
+
+```bash
+npm run dev
+```
+
+Open the local URL displayed by Vite.
+
+## Database Setup
+
+CollabDocs uses Supabase PostgreSQL.
+
+The application requires:
+
+- A `documents` table for document records.
+- A `document_shares` table for sharing permissions.
+- Supabase Row Level Security (RLS) policies to control document access.
+
+Configure the corresponding tables, relationships, and RLS policies in your Supabase project before running the application.
+
+## Testing
+
+Run the automated tests:
+
+```bash
+npm run test:run
+```
+
+Run TypeScript checks:
+
+```bash
+npx tsc --noEmit
+```
+
+Run linting:
+
+```bash
+npm run lint
+```
+
+Create a production build:
+
+```bash
+npm run build
+```
+
+## Deployment
+
+The production application is deployed using Vercel and connected to the GitHub repository.
+
+Production URL:
+
+https://collabdocs-tan.vercel.app
+
+Configure the required Supabase environment variables
