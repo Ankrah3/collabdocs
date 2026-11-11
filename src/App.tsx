@@ -30,6 +30,8 @@ import type { Session } from "@supabase/supabase-js";
 import AuthScreen from "./components/AuthScreen";
 import { supabase } from "./lib/supabase";
 
+type WorkspacePage = "all" | "shared" | "starred" | "recent" | "settings";
+
 function Workspace({ user }: { user: User }) {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [activeId, setActiveId] = useState<string>("");
@@ -45,6 +47,20 @@ function Workspace({ user }: { user: User }) {
 
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [currentPage, setCurrentPage] = useState<WorkspacePage>("all");
+  const [starredIds, setStarredIds] = useState<string[]>(() => {
+    try {
+      const saved = window.localStorage.getItem(
+        `collabdocs:starred:${user.id}`,
+      );
+      const parsed: unknown = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed)
+        ? parsed.filter((id): id is string => typeof id === "string")
+        : [];
+    } catch {
+      return [];
+    }
+  });
 
   const activeDocument =
     documents.find((document) => document.id === activeId) ?? documents[0];
@@ -83,6 +99,13 @@ function Workspace({ user }: { user: User }) {
       cancelled = true;
     };
   }, [user.id, user.email]);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      `collabdocs:starred:${user.id}`,
+      JSON.stringify(starredIds),
+    );
+  }, [starredIds, user.id]);
 
   async function addDocument() {
     try {
@@ -260,9 +283,51 @@ function Workspace({ user }: { user: User }) {
     );
   }
 
-  const filteredDocuments = documents.filter((document) =>
+  function toggleStarred(id: string) {
+    setStarredIds((current) =>
+      current.includes(id)
+        ? current.filter((starredId) => starredId !== id)
+        : [...current, id],
+    );
+  }
+
+  const pageDocuments = documents.filter((document) => {
+    switch (currentPage) {
+      case "shared":
+        return document.permission !== "owner";
+      case "starred":
+        return starredIds.includes(document.id);
+      case "settings":
+        return false;
+      case "recent":
+      case "all":
+        return true;
+    }
+  });
+
+  const filteredDocuments = pageDocuments.filter((document) =>
     document.title.toLowerCase().includes(search.toLowerCase()),
   );
+  const displayedDocuments =
+    currentPage === "recent"
+      ? [...filteredDocuments].sort(
+          (a, b) =>
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+        )
+      : filteredDocuments;
+  const pageTitle: Record<WorkspacePage, string> = {
+    all: "All documents",
+    shared: "Shared with me",
+    starred: "Starred",
+    recent: "Recent",
+    settings: "Settings",
+  };
+  const navigationClass = (page: WorkspacePage) =>
+    `flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${
+      currentPage === page
+        ? "bg-indigo-50 text-indigo-700"
+        : "text-slate-600 hover:bg-slate-100"
+    }`;
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-800">
@@ -310,19 +375,31 @@ function Workspace({ user }: { user: User }) {
           </p>
 
           <nav className="space-y-1">
-            <button className="flex w-full items-center gap-3 rounded-lg bg-indigo-500/10 px-3 py-2.5 text-left text-sm text-indigo-300">
+            <button
+              onClick={() => setCurrentPage("all")}
+              className={navigationClass("all")}
+            >
               <FileText size={17} />
               All documents
             </button>
-            <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-100">
+            <button
+              onClick={() => setCurrentPage("shared")}
+              className={navigationClass("shared")}
+            >
               <Users size={17} />
               Shared with me
             </button>
-            <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-100">
+            <button
+              onClick={() => setCurrentPage("starred")}
+              className={navigationClass("starred")}
+            >
               <Star size={17} />
               Starred
             </button>
-            <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-100">
+            <button
+              onClick={() => setCurrentPage("recent")}
+              className={navigationClass("recent")}
+            >
               <Clock3 size={17} />
               Recent
             </button>
@@ -331,16 +408,21 @@ function Workspace({ user }: { user: User }) {
           <div className="mt-9">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                My documents
+                {pageTitle[currentPage]}
               </p>
-              <span className="text-xs text-slate-500">{documents.length}</span>
+              <span className="text-xs text-slate-500">
+                {displayedDocuments.length}
+              </span>
             </div>
 
             <div className="space-y-1">
-              {filteredDocuments.map((document) => (
+              {displayedDocuments.map((document) => (
                 <button
                   key={document.id}
-                  onClick={() => setActiveId(document.id)}
+                  onClick={() => {
+                    setActiveId(document.id);
+                    setCurrentPage("all");
+                  }}
                   className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${
                     activeId === document.id
                       ? "bg-slate-100 text-slate-900"
@@ -363,7 +445,18 @@ function Workspace({ user }: { user: User }) {
             <p className="truncate text-sm font-medium text-slate-900">David</p>
             <p className="text-xs text-slate-500">Personal workspace</p>
           </div>
-          <Settings size={18} className="text-slate-500" />
+          <button
+            onClick={() => setCurrentPage("settings")}
+            aria-label="Open settings"
+            title="Settings"
+            className={`rounded-lg p-2 transition ${
+              currentPage === "settings"
+                ? "bg-indigo-50 text-indigo-700"
+                : "text-slate-500 hover:bg-slate-100"
+            }`}
+          >
+            <Settings size={18} />
+          </button>
         </div>
       </aside>
 
@@ -380,9 +473,15 @@ function Workspace({ user }: { user: User }) {
 
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-slate-900">
-                {activeDocument?.title ?? "No document selected"}
+                {currentPage === "all"
+                  ? activeDocument?.title ?? "No document selected"
+                  : pageTitle[currentPage]}
               </p>
-              <p className="text-xs text-slate-500">Saved in your workspace</p>
+              <p className="text-xs text-slate-500">
+                {currentPage === "all"
+                  ? "Saved in your workspace"
+                  : "CollabDocs workspace"}
+              </p>
             </div>
           </div>
 
@@ -428,6 +527,116 @@ function Workspace({ user }: { user: User }) {
             <div className="py-24 text-center text-slate-500">
               Loading your documents...
             </div>
+          ) : currentPage === "settings" ? (
+            <div>
+              <div className="mb-8">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-indigo-500">
+                  Workspace
+                </p>
+                <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
+                <p className="mt-2 text-sm text-slate-500">
+                  Account and workspace information.
+                </p>
+              </div>
+              <div className="max-w-2xl space-y-4">
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <h2 className="font-semibold text-slate-900">Account</h2>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Signed in as {user.email ?? "Unknown email"}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <h2 className="font-semibold text-slate-900">Workspace</h2>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {documents.length} {documents.length === 1 ? "document" : "documents"} available to you.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : currentPage !== "all" ? (
+            <div>
+              <div className="mb-8">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-indigo-500">
+                  Workspace
+                </p>
+                <h1 className="text-3xl font-bold text-slate-900">
+                  {pageTitle[currentPage]}
+                </h1>
+                <p className="mt-2 text-sm text-slate-500">
+                  {currentPage === "shared" &&
+                    "Documents other people have shared with you."}
+                  {currentPage === "starred" &&
+                    "Your saved documents, available in this browser."}
+                  {currentPage === "recent" &&
+                    "Documents ordered by most recently edited."}
+                </p>
+              </div>
+
+              {displayedDocuments.length === 0 ? (
+                <div className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center">
+                  <FileText size={36} className="mx-auto mb-3 text-slate-400" />
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    {currentPage === "shared"
+                      ? "No shared documents yet"
+                      : currentPage === "starred"
+                        ? "No starred documents yet"
+                        : "No recent documents"}
+                  </h2>
+                  <p className="mt-2 text-sm text-slate-500">
+                    {currentPage === "starred"
+                      ? "Use the star button on a document to save it here."
+                      : "Documents will appear here when they are available."}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {displayedDocuments.map((document) => (
+                    <div
+                      key={document.id}
+                      className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                    >
+                      <button
+                        onClick={() => {
+                          setActiveId(document.id);
+                          setCurrentPage("all");
+                        }}
+                        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                      >
+                        <FileText size={20} className="shrink-0 text-indigo-500" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-semibold text-slate-900">
+                            {document.title}
+                          </span>
+                          <span className="mt-1 block text-xs text-slate-500">
+                            Edited {new Date(document.updatedAt).toLocaleString()}
+                            {document.permission !== "owner" &&
+                              ` · ${document.permission}`}
+                          </span>
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => toggleStarred(document.id)}
+                        aria-label={
+                          starredIds.includes(document.id)
+                            ? `Remove ${document.title} from starred`
+                            : `Add ${document.title} to starred`
+                        }
+                        className="rounded-lg p-2 text-amber-500 hover:bg-amber-50"
+                      >
+                        <Star
+                          size={18}
+                          fill={
+                            starredIds.includes(document.id)
+                              ? "currentColor"
+                              : "none"
+                          }
+                        />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : activeDocument ? (
             <>
               <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
@@ -444,6 +653,29 @@ function Workspace({ user }: { user: User }) {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => toggleStarred(activeDocument.id)}
+                    aria-label={
+                      starredIds.includes(activeDocument.id)
+                        ? "Remove from starred"
+                        : "Add to starred"
+                    }
+                    title={
+                      starredIds.includes(activeDocument.id)
+                        ? "Remove from starred"
+                        : "Add to starred"
+                    }
+                    className="rounded-xl border border-slate-200 p-2.5 text-amber-500 transition hover:bg-amber-50"
+                  >
+                    <Star
+                      size={18}
+                      fill={
+                        starredIds.includes(activeDocument.id)
+                          ? "currentColor"
+                          : "none"
+                      }
+                    />
+                  </button>
                   <label
                     className={`flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold transition hover:bg-slate-50 ${
                       activeDocument.permission === "viewer"

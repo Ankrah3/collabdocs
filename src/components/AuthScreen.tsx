@@ -51,16 +51,16 @@ export default function AuthScreen() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0b1020] px-5 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111a2e] p-8 shadow-2xl">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-5 py-10">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/70">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500">
             <FileText size={28} className="text-white" />
           </div>
 
-          <h1 className="text-2xl font-bold text-white">CollabDocs</h1>
+          <h1 className="text-2xl font-bold text-slate-900">CollabDocs</h1>
 
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-slate-500">
             {isLogin
               ? "Welcome back. Sign in to your workspace."
               : "Create an account to start collaborating."}
@@ -69,7 +69,7 @@ export default function AuthScreen() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm text-slate-300">
+            <label className="mb-2 block text-sm text-slate-700">
               Email address
             </label>
             <input
@@ -78,12 +78,12 @@ export default function AuthScreen() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="you@example.com"
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-indigo-400"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none placeholder:text-slate-400 focus:border-indigo-400"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-slate-300">
+            <label className="mb-2 block text-sm text-slate-700">
               Password
             </label>
             <input
@@ -93,18 +93,18 @@ export default function AuthScreen() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="At least 6 characters"
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-indigo-400"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none placeholder:text-slate-400 focus:border-indigo-400"
             />
           </div>
 
           {error && (
-            <p className="rounded-lg bg-red-500/10 p-3 text-sm text-red-300">
+            <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
               {error}
             </p>
           )}
 
           {message && (
-            <p className="rounded-lg bg-emerald-500/10 p-3 text-sm text-emerald-300">
+            <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
               {message}
             </p>
           )}
@@ -123,7 +123,7 @@ export default function AuthScreen() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-400">
+        <p className="mt-6 text-center text-sm text-slate-500">
           {isLogin ? "Don't have an account?" : "Already have an account?"}
           <button
             type="button"
@@ -132,7 +132,7 @@ export default function AuthScreen() {
               setError("");
               setMessage("");
             }}
-            className="ml-2 font-semibold text-indigo-400 hover:text-indigo-300"
+            className="ml-2 font-semibold text-indigo-600 hover:text-indigo-500"
           >
             {isLogin ? "Sign up" : "Sign in"}
           </button>
