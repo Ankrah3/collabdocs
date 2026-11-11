@@ -11,6 +11,7 @@ import {
   Save,
   Upload,
   Download,
+  LogOut,
 } from "lucide-react";
 import {
   importDocumentFile,
@@ -123,6 +124,15 @@ function Workspace({ user }: { user: User }) {
     } catch (error) {
       console.error("Failed to create document:", error);
       setSaveStatus("Failed to create document");
+    }
+  }
+
+  async function handleSignOut() {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error("Failed to sign out:", error);
+      setSaveStatus("Sign out failed");
     }
   }
 
@@ -442,9 +452,19 @@ function Workspace({ user }: { user: User }) {
             DA
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-slate-900">David</p>
+            <p className="truncate text-sm font-medium text-slate-900">
+              {user.email ?? "Account"}
+            </p>
             <p className="text-xs text-slate-500">Personal workspace</p>
           </div>
+          <button
+            onClick={handleSignOut}
+            aria-label="Log out"
+            title="Log out"
+            className="rounded-lg p-2 text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+          >
+            <LogOut size={18} />
+          </button>
           <button
             onClick={() => setCurrentPage("settings")}
             aria-label="Open settings"
